@@ -145,7 +145,11 @@ export class NPLRuntime extends EventEmitter {
 	private loadSource(file: string) {
 		if (this._sourceFile !== file) {
 			this._sourceFile = file;
-			this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
+			try {
+				this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
+			} catch (error) {
+				this._sourceLines = ["hello", "world"];
+			}
 		}
 	}
 

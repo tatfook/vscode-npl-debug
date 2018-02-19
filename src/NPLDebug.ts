@@ -117,7 +117,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		this._runtime.start("readme.md"/*args.program*/, !!args.stopOnEntry);
+		this._runtime.start(args.program, !!args.stopOnEntry);
 
 		this.sendResponse(response);
 	}

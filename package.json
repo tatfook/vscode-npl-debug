@@ -116,8 +116,8 @@
 							},
 							"program": {
 								"type": "string",
-								"description": "specify the program name and command line parameters",
-								"default": "npl"
+								"description": "specify the main loop file",
+								"default": "helloworld.npl"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
@@ -138,6 +138,7 @@
 						"request": "attach",
 						"name": "Attach Http Debugger",
 						"port": 8099,
+						"trace": false,
 						"stopOnEntry": true
 					},
 					{
@@ -146,6 +147,7 @@
 						"name": "Launch NPL process",
 						"program": "npl",
 						"port": 8099,
+						"trace": false,
 						"stopOnEntry": true
 					}
 				],
@@ -158,6 +160,7 @@
 							"request": "attach",
 							"name": "Attach Http Debugger",
 							"port": 8099,
+							"trace": false,
 							"stopOnEntry": true
 						}
 					},
@@ -168,8 +171,9 @@
 							"type": "NPL",
 							"request": "launch",
 							"name": "Launch Http Debugger",
-							"program": "npl",
+							"program": "${workspaceFolder}/readme.md",
 							"port": 8099,
+							"trace": false,
 							"stopOnEntry": true
 						}
 					}

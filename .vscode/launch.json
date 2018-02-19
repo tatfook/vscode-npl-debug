@@ -37,10 +37,13 @@
 			"internalConsoleOptions": "openOnSessionStart"
 		},
 		{
-			"type": "npl",
+			"type": "NPL",
 			"request": "launch",
 			"name": "NPL Sample",
-			"program": "${workspaceFolder}/${command:AskForProgramName}",
+			"port": 8099,
+			"debugServer": 4711,
+			"trace": true,
+			"program": "${workspaceFolder}/readme.md",
 			"stopOnEntry": true
 		}
 	],

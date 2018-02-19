@@ -6,17 +6,24 @@
 
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-// import { NPLDebugSession } from './NPLDebug';
+import { NPLDebugSession } from './NPLDebug';
 import * as Net from 'net';
+
+/*
+ * Set the following compile time flag to true if the
+ * debug adapter should run inside the extension host.
+ * Please note: the test suite does no longer work in this mode.
+ */
+const EMBED_DEBUG_ADAPTER = true;
 
 export function activate(context: vscode.ExtensionContext) {
 
-	context.subscriptions.push(vscode.commands.registerCommand('extension.NPL-debug.getProgramName', config => {
-		return vscode.window.showInputBox({
-			placeHolder: "Please enter the name of a markdown file in the workspace folder",
-			value: "readme.md"
-		});
-	}));
+	// context.subscriptions.push(vscode.commands.registerCommand('extension.NPL-debug.getProgramName', config => {
+	// 	return vscode.window.showInputBox({
+	// 		placeHolder: "Please enter the name of a markdown file in the workspace folder",
+	// 		value: "readme.md"
+	// 	});
+	// }));
 
 	// register a configuration provider for 'NPL' debug type
 	const provider = new NPLConfigurationProvider()
@@ -54,6 +61,22 @@ class NPLConfigurationProvider implements vscode.DebugConfigurationProvider {
 			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {
 				return undefined;	// abort launch
 			});
+		}
+
+		if (EMBED_DEBUG_ADAPTER) {
+			// start port listener on launch of first debug session
+			if (!this._server) {
+
+				// start listening on a random port
+				this._server = Net.createServer(socket => {
+					const session = new NPLDebugSession();
+					session.setRunAsServer(true);
+					session.start(<NodeJS.ReadableStream>socket, socket);
+				}).listen(0);
+			}
+
+			// make VS Code connect to debug server instead of launching debug adapter
+			config.debugServer = this._server.address().port;
 		}
 
 		return config;
