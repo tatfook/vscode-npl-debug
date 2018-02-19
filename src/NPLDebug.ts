@@ -1,6 +1,8 @@
-/*---------------------------------------------------------
- * Copyright (C) Microsoft Corporation. All rights reserved.
- *--------------------------------------------------------*/
+/**
+ * author: LiXizhi
+ * email: lixizhi@yeah.net
+ * date: 2018/2.19
+ */
 
 import {
 	Logger, logger,
@@ -10,32 +12,18 @@ import {
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
-import { MockRuntime, MockBreakpoint } from './mockRuntime';
+import { NPLRuntime, NPLBreakpoint } from './NPLDebugRuntime';
 const { Subject } = require('await-notify');
+import {LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
 
 
-/**
- * This interface describes the mock-debug specific launch attributes
- * (which are not part of the Debug Adapter Protocol).
- * The schema for these attributes lives in the package.json of the mock-debug extension.
- * The interface should always match this schema.
- */
-interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
-	/** An absolute path to the "program" to debug. */
-	program: string;
-	/** Automatically stop target after launch. If not specified, target does not stop. */
-	stopOnEntry?: boolean;
-	/** enable logging the Debug Adapter Protocol */
-	trace?: boolean;
-}
-
-export class MockDebugSession extends LoggingDebugSession {
+export class NPLDebugSession extends LoggingDebugSession {
 
 	// we don't support multiple threads, so we can use a hardcoded ID for the default thread
 	private static THREAD_ID = 1;
 
-	// a Mock runtime (or debugger)
-	private _runtime: MockRuntime;
+	// a NPL runtime (or debugger)
+	private _runtime: NPLRuntime;
 
 	private _variableHandles = new Handles<string>();
 
@@ -46,28 +34,28 @@ export class MockDebugSession extends LoggingDebugSession {
 	 * We configure the default implementation of a debug adapter here.
 	 */
 	public constructor() {
-		super("mock-debug.txt");
+		super("NPL-debug.txt");
 
 		// this debugger uses zero-based lines and columns
 		this.setDebuggerLinesStartAt1(false);
 		this.setDebuggerColumnsStartAt1(false);
 
-		this._runtime = new MockRuntime();
+		this._runtime = new NPLRuntime();
 
 		// setup event handlers
 		this._runtime.on('stopOnEntry', () => {
-			this.sendEvent(new StoppedEvent('entry', MockDebugSession.THREAD_ID));
+			this.sendEvent(new StoppedEvent('entry', NPLDebugSession.THREAD_ID));
 		});
 		this._runtime.on('stopOnStep', () => {
-			this.sendEvent(new StoppedEvent('step', MockDebugSession.THREAD_ID));
+			this.sendEvent(new StoppedEvent('step', NPLDebugSession.THREAD_ID));
 		});
 		this._runtime.on('stopOnBreakpoint', () => {
-			this.sendEvent(new StoppedEvent('breakpoint', MockDebugSession.THREAD_ID));
+			this.sendEvent(new StoppedEvent('breakpoint', NPLDebugSession.THREAD_ID));
 		});
 		this._runtime.on('stopOnException', () => {
-			this.sendEvent(new StoppedEvent('exception', MockDebugSession.THREAD_ID));
+			this.sendEvent(new StoppedEvent('exception', NPLDebugSession.THREAD_ID));
 		});
-		this._runtime.on('breakpointValidated', (bp: MockBreakpoint) => {
+		this._runtime.on('breakpointValidated', (bp: NPLBreakpoint) => {
 			this.sendEvent(new BreakpointEvent('changed', <DebugProtocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
 		});
 		this._runtime.on('output', (text, filePath, line, column) => {
@@ -123,12 +111,28 @@ export class MockDebugSession extends LoggingDebugSession {
 
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
+		logger.log("NPL attach launch received");
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		this._runtime.start(args.program, !!args.stopOnEntry);
+		this._runtime.start("readme.md"/*args.program*/, !!args.stopOnEntry);
+
+		this.sendResponse(response);
+	}
+
+	protected async attachRequest(response: DebugProtocol.AttachResponse, args: AttachRequestArguments) {
+
+		// make sure to 'Stop' the buffered logging if 'trace' is not set
+		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
+		logger.log("NPL attach request received");
+
+		// wait until configuration has finished (and configurationDoneRequest has been called)
+		await this._configurationDone.wait(1000);
+
+		// start the program in the runtime
+		this._runtime.start("readme.md", !!args.stopOnEntry);
 
 		this.sendResponse(response);
 	}
@@ -161,7 +165,7 @@ export class MockDebugSession extends LoggingDebugSession {
 		// runtime supports now threads so just return a default thread.
 		response.body = {
 			threads: [
-				new Thread(MockDebugSession.THREAD_ID, "thread 1")
+				new Thread(NPLDebugSession.THREAD_ID, "thread 1")
 			]
 		};
 		this.sendResponse(response);
@@ -289,6 +293,6 @@ export class MockDebugSession extends LoggingDebugSession {
 	//---- helpers
 
 	private createSource(filePath: string): Source {
-		return new Source(basename(filePath), this.convertDebuggerPathToClient(filePath), undefined, undefined, 'mock-adapter-data');
+		return new Source(basename(filePath), this.convertDebuggerPathToClient(filePath), undefined, undefined, 'NPL-adapter-data');
 	}
 }

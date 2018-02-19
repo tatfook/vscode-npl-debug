@@ -17,7 +17,7 @@
 			"request": "launch",
 			"name": "Server",
 			"cwd": "${workspaceFolder}",
-			"program": "${workspaceFolder}/src/mockDebug.ts",
+			"program": "${workspaceFolder}/src/NPLDebug.ts",
 			"args": [ "--server=4711" ],
 			"outFiles": [ "${workspaceFolder}/out/**/*.js" ]
 		},
@@ -37,9 +37,9 @@
 			"internalConsoleOptions": "openOnSessionStart"
 		},
 		{
-			"type": "mock",
+			"type": "npl",
 			"request": "launch",
-			"name": "Mock Sample",
+			"name": "NPL Sample",
 			"program": "${workspaceFolder}/${command:AskForProgramName}",
 			"stopOnEntry": true
 		}

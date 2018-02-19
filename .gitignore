@@ -2,5 +2,5 @@
 node_modules/
 out/
 npm-debug.log
-mock-debug.txt
+npl-debug.txt
 *.vsix

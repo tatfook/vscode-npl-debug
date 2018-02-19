@@ -1,12 +1,12 @@
 {
-	"name": "mock-debug",
-	"displayName": "Mock Debug",
-	"version": "0.27.0",
-	"publisher": "andreweinand",
-	"description": "Starter extension for developing debug adapters for VS Code.",
+	"name": "npl-debug",
+	"displayName": "NPL Debug",
+	"version": "0.1.0",
+	"publisher": "LiXizhi",
+	"description": "NPL(Neural Parallel Language) Debugger for VS Code.",
 	"author": {
-		"name": "Microsoft Corporation",
-		"email": "aweinand@microsoft.com"
+		"name": "Tatfook Co.",
+		"email": "lixizhi@yeah.net"
 	},
 	"license": "MIT",
 	"keywords": [
@@ -16,17 +16,17 @@
 		"vscode": "^1.18.0",
 		"node": "^7.9.0"
 	},
-	"icon": "images/mock-debug-icon.png",
+	"icon": "images/npl-debug-icon.png",
 	"categories": [
 		"Debuggers"
 	],
 	"private": true,
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-mock-debug.git"
+		"url": "https://github.com/tatfook/vscode-npl-debug.git"
 	},
 	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-mock-debug/issues"
+		"url": "https://github.com/tatfook/vscode-npl-debug/issues"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",
@@ -53,33 +53,71 @@
 		"tslint": "5.8.0",
 		"vsce": "1.35.0"
 	},
+	"config": {
+		"unsafe-perm":true
+	},
 	"main": "./out/extension",
 	"activationEvents": [
-		"onDebug",
-		"onCommand:extension.mock-debug.getProgramName"
+		"onDebug"
 	],
 	"contributes": {
 		"breakpoints": [
 			{
 				"language": "markdown"
+			},
+			{
+				"language": "lua"
+			},
+			{
+				"language": "page"
+			},
+			{
+				"language": "npl"
 			}
 		],
 		"debuggers": [
 			{
-				"type": "mock",
-				"label": "Mock Debug",
-				"program": "./out/debugAdapter.js",
+				"type": "NPL",
+				"label": "NPL Debug",
+				"program": "./out/NPLDebugAdapter.js",
 				"runtime": "node",
 				"configurationAttributes": {
-					"launch": {
+					"attach": {
 						"required": [
-							"program"
+							"port"
 						],
 						"properties": {
+							"port": {
+								"type": "number",
+								"description": "remote http debug port number",
+								"default": 8099
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "Automatically stop after launch.",
+								"default": true
+							},
+							"trace": {
+								"type": "boolean",
+								"description": "Enable logging of the Debug Adapter Protocol.",
+								"default": true
+							}
+						}
+					},
+					"launch": {
+						"required": [
+							"program", "port"
+						],
+						"properties": {
+							"port": {
+								"type": "number",
+								"description": "remote http debug port number",
+								"default": 8099
+							},
 							"program": {
 								"type": "string",
-								"description": "Absolute path to a text file.",
-								"default": "${workspaceFolder}/${command:AskForProgramName}"
+								"description": "specify the program name and command line parameters",
+								"default": "npl"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
@@ -96,28 +134,48 @@
 				},
 				"initialConfigurations": [
 					{
-						"type": "mock",
+						"type": "NPL",
+						"request": "attach",
+						"name": "Attach Http Debugger",
+						"port": 8099,
+						"stopOnEntry": true
+					},
+					{
+						"type": "NPL",
 						"request": "launch",
-						"name": "Ask for file name",
-						"program": "${workspaceFolder}/${command:AskForProgramName}",
+						"name": "Launch NPL process",
+						"program": "npl",
+						"port": 8099,
 						"stopOnEntry": true
 					}
 				],
 				"configurationSnippets": [
 					{
-						"label": "Mock Debug: Launch",
-						"description": "A new configuration for 'debugging' a user selected markdown file.",
+						"label": "NPL Debug: Attach",
+						"description": "NPL HTTP web debugger",
 						"body": {
-							"type": "mock",
+							"type": "NPL",
+							"request": "attach",
+							"name": "Attach Http Debugger",
+							"port": 8099,
+							"stopOnEntry": true
+						}
+					},
+					{
+						"label": "NPL Debug: Launch",
+						"description": "Launch NPL HTTP web debugger",
+						"body": {
+							"type": "NPL",
 							"request": "launch",
-							"name": "Ask for file name",
-							"program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
+							"name": "Launch Http Debugger",
+							"program": "npl",
+							"port": 8099,
 							"stopOnEntry": true
 						}
 					}
 				],
 				"variables": {
-					"AskForProgramName": "extension.mock-debug.getProgramName"
+					"AskForProgramName": "extension.NPL-debug.getProgramName"
 				}
 			}
 		]
