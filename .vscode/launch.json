@@ -40,6 +40,7 @@
 			"type": "NPL",
 			"request": "launch",
 			"name": "NPL Sample",
+			"cwd": "${workspaceFolder}",
 			"port": 8099,
 			"debugServer": 4711,
 			"trace": true,
