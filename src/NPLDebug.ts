@@ -3,14 +3,13 @@
  * email: lixizhi@yeah.net
  * date: 2018/2.19
  */
-
 import {
 	Logger, logger,
 	LoggingDebugSession,
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
-import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
 import { NPLDebugRuntime, NPLBreakpoint, NPLScriptBreakpoint } from './NPLDebugRuntime';
@@ -57,13 +56,14 @@ export class NPLDebugSession extends LoggingDebugSession {
 			this.sendEvent(new StoppedEvent('exception', NPLDebugSession.THREAD_ID));
 		});
 		this._runtime.on('breakpointValidated', (bp: NPLBreakpoint) => {
+			// not used
 			this.sendEvent(new BreakpointEvent('changed', <DebugProtocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
 		});
 		this._runtime.on('output', (text, filePath, line, column) => {
 			const e: DebugProtocol.OutputEvent = new OutputEvent(`${text}\n`);
-			e.body.source = this.createSource(filePath);
-			e.body.line = this.convertDebuggerLineToClient(line);
-			e.body.column = this.convertDebuggerColumnToClient(column);
+			e.body.source = filePath && this.createSource(filePath);
+			e.body.line = line && this.convertDebuggerLineToClient(line);
+			e.body.column = column && this.convertDebuggerColumnToClient(column);
 			this.sendEvent(e);
 		});
 		this._runtime.on('end', () => {
@@ -73,6 +73,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 			logger.log(text, level);
 		});
 		this._runtime.on('message', (text, callback) => {
+			/*
 			if(callback){
 				vscode.window.showInformationMessage(text, "OK").then((item)=>{
 					if(item == "OK"){
@@ -83,9 +84,10 @@ export class NPLDebugSession extends LoggingDebugSession {
 			else{
 				vscode.window.showInformationMessage(text);
 			}
+			*/
 		});
 		this._runtime.on('open_url', (url) => {
-			vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
+			// vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
 		});
 	}
 
@@ -186,10 +188,10 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
 
-		// runtime supports now threads so just return a default thread.
+		// runtime supports threads so just return a default thread.
 		response.body = {
 			threads: [
-				new Thread(NPLDebugSession.THREAD_ID, "thread 1")
+				new Thread(NPLDebugSession.THREAD_ID, "NPL Main thread")
 			]
 		};
 		this.sendResponse(response);
@@ -266,52 +268,45 @@ export class NPLDebugSession extends LoggingDebugSession {
 	}
 
 	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments) : void {
-		this._runtime.continue(true);
+		this._runtime.continue();
 		this.sendResponse(response);
  	}
 
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
-		this._runtime.step();
+		this._runtime.stepover();
 		this.sendResponse(response);
 	}
 
-	protected stepBackRequest(response: DebugProtocol.StepBackResponse, args: DebugProtocol.StepBackArguments): void {
-		this._runtime.step(true);
+	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments){
+		this._runtime.stepinto();
 		this.sendResponse(response);
 	}
+
+	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments){
+		this._runtime.stepout();
+		this.sendResponse(response);
+	}
+
+	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments){
+		this._runtime.pause();
+		this.sendResponse(response);
+	};
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
 
 		let reply: string | undefined = undefined;
-
-		if (args.context === 'repl') {
-			// 'evaluate' supports to create and delete breakpoints from the 'repl':
-			const matches = /new +([0-9]+)/.exec(args.expression);
-			if (matches && matches.length === 2) {
-				const mbp = this._runtime.setBreakpoint(this._runtime.sourceFile, this.convertClientLineToDebugger(parseInt(matches[1])));
-				const bp = <DebugProtocol.Breakpoint> new Breakpoint(mbp.verified || true, this.convertDebuggerLineToClient(mbp.line), undefined, this.createSource(this._runtime.sourceFile));
-				// bp.id= mbp.id;
-				this.sendEvent(new BreakpointEvent('new', bp));
-				reply = `breakpoint created`;
-			} else {
-				const matches = /del +([0-9]+)/.exec(args.expression);
-				if (matches && matches.length === 2) {
-					const mbp = this._runtime.clearBreakPoint(this._runtime.sourceFile, this.convertClientLineToDebugger(parseInt(matches[1])));
-					if (mbp) {
-						const bp = <DebugProtocol.Breakpoint> new Breakpoint(false);
-						bp.id= mbp.id;
-						this.sendEvent(new BreakpointEvent('removed', bp));
-						reply = `breakpoint deleted`;
-					}
-				}
-			}
-		}
 
 		response.body = {
 			result: reply ? reply : `evaluate(context: '${args.context}', '${args.expression}')`,
 			variablesReference: 0
 		};
 		this.sendResponse(response);
+	}
+
+	protected convertDebuggerPathToClient(debuggerPath: string): string
+	{
+		// TODO: append working directory or npl_packages
+		return debuggerPath;
 	}
 
 	//---- helpers

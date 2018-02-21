@@ -54,9 +54,6 @@
 		"tslint": "5.8.0",
 		"vsce": "1.35.0"
 	},
-	"config": {
-		"unsafe-perm":true
-	},
 	"main": "./out/extension",
 	"activationEvents": [
 		"onDebug"
