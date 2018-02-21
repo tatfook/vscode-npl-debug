@@ -41,7 +41,8 @@
 	"dependencies": {
 		"await-notify": "1.0.1",
 		"vscode-debugadapter": "1.26.0",
-		"vscode-debugprotocol": "1.26.0"
+		"vscode-debugprotocol": "1.26.0",
+		"request": "2.83.0"
 	},
 	"devDependencies": {
 		"@types/node": "7.0.43",
@@ -138,8 +139,7 @@
 						"request": "attach",
 						"name": "Attach Http Debugger",
 						"port": 8099,
-						"trace": false,
-						"stopOnEntry": true
+						"trace": false
 					},
 					{
 						"type": "NPL",
@@ -160,8 +160,7 @@
 							"request": "attach",
 							"name": "Attach Http Debugger",
 							"port": 8099,
-							"trace": false,
-							"stopOnEntry": true
+							"trace": false
 						}
 					},
 					{

@@ -4,3 +4,5 @@ out/
 npm-debug.log
 npl-debug.txt
 *.vsix
+log.txt
+npl_packages/

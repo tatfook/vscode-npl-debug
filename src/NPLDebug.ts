@@ -10,9 +10,10 @@ import {
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
+import * as vscode from 'vscode';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
-import { NPLRuntime, NPLBreakpoint } from './NPLDebugRuntime';
+import { NPLDebugRuntime, NPLBreakpoint } from './NPLDebugRuntime';
 const { Subject } = require('await-notify');
 import {LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
 
@@ -23,7 +24,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 	private static THREAD_ID = 1;
 
 	// a NPL runtime (or debugger)
-	private _runtime: NPLRuntime;
+	private _runtime: NPLDebugRuntime;
 
 	private _variableHandles = new Handles<string>();
 
@@ -40,7 +41,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this.setDebuggerLinesStartAt1(false);
 		this.setDebuggerColumnsStartAt1(false);
 
-		this._runtime = new NPLRuntime();
+		this._runtime = new NPLDebugRuntime();
 
 		// setup event handlers
 		this._runtime.on('stopOnEntry', () => {
@@ -67,6 +68,24 @@ export class NPLDebugSession extends LoggingDebugSession {
 		});
 		this._runtime.on('end', () => {
 			this.sendEvent(new TerminatedEvent());
+		});
+		this._runtime.on('log', (text, level?) => {
+			logger.log(text, level);
+		});
+		this._runtime.on('message', (text, callback) => {
+			if(callback){
+				vscode.window.showInformationMessage(text, "OK").then((item)=>{
+					if(item == "OK"){
+						callback();
+					}
+				});
+			}
+			else{
+				vscode.window.showInformationMessage(text);
+			}
+		});
+		this._runtime.on('open_url', (url) => {
+			vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
 		});
 	}
 
@@ -111,7 +130,6 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
-		logger.log("NPL attach launch received");
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
@@ -126,14 +144,19 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
-		logger.log("NPL attach request received");
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 
-		// start the program in the runtime
-		this._runtime.start("readme.md", !!args.stopOnEntry);
+		// attach to running NPL runtime
+		this._runtime.attach(args.port);
 
+		this.sendResponse(response);
+	}
+
+	protected async disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments)
+	{
+		this._runtime.stop();
 		this.sendResponse(response);
 	}
 
