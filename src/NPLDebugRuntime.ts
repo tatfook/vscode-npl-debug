@@ -152,9 +152,9 @@ export class NPLDebugRuntime extends EventEmitter {
 	 * @param filename: this is the absolute filename
 	 * @param line
 	 */
-	public setBreakpoint(filename:string, line:number)  : NPLScriptBreakpoint | undefined {
+	public setBreakpoint(filename:string, line:number)  : NPLScriptBreakpoint {
 		filename = this.getRelativePath(filename);
-		return this.addBreakpoint(filename, line);
+		return this.addBreakpoint(filename, line) || {filename:filename, line:line};
 	}
 
 	/**
@@ -164,7 +164,7 @@ export class NPLDebugRuntime extends EventEmitter {
 	 */
 	private addBreakpoint(filename:string, line:number) : NPLScriptBreakpoint | undefined {
 		if (filename && filename != "" && line != null && this.getBreakpointIndex(filename, line) < 0) {
-			request.get({url: `${this.GetHost()}vscode_debugger?action=addbreakpoint&filename=${encodeURIComponent(filename)}&line=${encodeURIComponent(line)}`, json:true}, (error, response, data) =>{
+			request.get({url: `${this.GetHost()}vscode_debugger?action=addbreakpoint&filename=${encodeURIComponent(filename)}&line=${encodeURIComponent(String(line))}`, json:true}, (error, response, data) =>{
 			});
 			var bp:NPLScriptBreakpoint = { filename: filename, line: line };
 			this.breakpoints.push(bp);

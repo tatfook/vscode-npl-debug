@@ -13,7 +13,7 @@ import {
 import * as vscode from 'vscode';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
-import { NPLDebugRuntime, NPLBreakpoint } from './NPLDebugRuntime';
+import { NPLDebugRuntime, NPLBreakpoint, NPLScriptBreakpoint } from './NPLDebugRuntime';
 const { Subject } = require('await-notify');
 import {LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
 
@@ -135,7 +135,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		this._runtime.start(args.program, !!args.stopOnEntry);
+		this._runtime.start(args.program, args.port, !!args.stopOnEntry);
 
 		this.sendResponse(response);
 	}
@@ -170,9 +170,10 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// set and verify breakpoint locations
 		const actualBreakpoints = clientLines.map(l => {
-			let { verified, line, id } = this._runtime.setBreakPoint(path, this.convertClientLineToDebugger(l));
-			const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line));
-			bp.id= id;
+			let npl_bp : NPLScriptBreakpoint = this._runtime.setBreakpoint(path, this.convertClientLineToDebugger(l));
+
+			const bp = <DebugProtocol.Breakpoint> new Breakpoint(npl_bp.verified || true, this.convertDebuggerLineToClient(npl_bp.line));
+			// bp.id = id;
 			return bp;
 		});
 
@@ -287,9 +288,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 			// 'evaluate' supports to create and delete breakpoints from the 'repl':
 			const matches = /new +([0-9]+)/.exec(args.expression);
 			if (matches && matches.length === 2) {
-				const mbp = this._runtime.setBreakPoint(this._runtime.sourceFile, this.convertClientLineToDebugger(parseInt(matches[1])));
-				const bp = <DebugProtocol.Breakpoint> new Breakpoint(mbp.verified, this.convertDebuggerLineToClient(mbp.line), undefined, this.createSource(this._runtime.sourceFile));
-				bp.id= mbp.id;
+				const mbp = this._runtime.setBreakpoint(this._runtime.sourceFile, this.convertClientLineToDebugger(parseInt(matches[1])));
+				const bp = <DebugProtocol.Breakpoint> new Breakpoint(mbp.verified || true, this.convertDebuggerLineToClient(mbp.line), undefined, this.createSource(this._runtime.sourceFile));
+				// bp.id= mbp.id;
 				this.sendEvent(new BreakpointEvent('new', bp));
 				reply = `breakpoint created`;
 			} else {
