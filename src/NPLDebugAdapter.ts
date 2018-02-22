@@ -7,7 +7,7 @@ import {
 	Logger, logger,
 	LoggingDebugSession,
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
-	Thread, StackFrame, Scope, Source, Handles, Breakpoint
+	Thread, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
 import { showInformationMessage, open_url } from './VscodeWrapper';
 import { DebugProtocol } from 'vscode-debugprotocol';
@@ -33,7 +33,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 	/** mapping from known relative path to real file path on disk */
 	private _sourceMap = {};
 
-	private _last_evaluate_response: DebugProtocol.EvaluateResponse;
+	private _last_evaluate_response: DebugProtocol.EvaluateResponse | undefined;
 
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
@@ -181,7 +181,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 
-		const path = this.getRelativePathFromRealPath(args.source.path);
+		const path : string = this.getRelativePathFromRealPath(args.source.path || "") || "";
 		const clientLines = args.lines || [];
 
 		// clear all breakpoints for this file
@@ -328,13 +328,15 @@ export class NPLDebugSession extends LoggingDebugSession {
 	}
 
 	private getRelativePathFromRealPath(filename: string): string | undefined {
-		filename = filename.replace(/\\/g, "/");
-		this._searchPath.forEach((path)=>{
-			filename = filename.replace(path.replace(/\\/g, "/"), "");
-			filename = filename.replace(path.replace(/\\/g, "/").toLowerCase(), "");
-		});
-		filename = filename.replace(/.*npl_packages\/[^\/]+\//g, "");
-		return filename;
+		if(filename){
+			filename = filename.replace(/\\/g, "/");
+			this._searchPath.forEach((path)=>{
+				filename = filename.replace(path.replace(/\\/g, "/"), "");
+				filename = filename.replace(path.replace(/\\/g, "/").toLowerCase(), "");
+			});
+			filename = filename.replace(/.*npl_packages\/[^\/]+\//g, "");
+			return filename;
+		}
 	}
 
 	/**
@@ -343,10 +345,10 @@ export class NPLDebugSession extends LoggingDebugSession {
 	 */
 	private getRealPathFromRelativePath(path: string): string | undefined {
 		let realpath = this._sourceMap[path];
-		if (typeof(realpath) == "string"){
+		if (typeof realpath == "string"){
 			return realpath;
 		}
-		else if(typeof(realpath) == "bool" && !realpath){
+		else if(typeof realpath == "boolean" && !realpath){
 			realpath = undefined;
 		}
 		else

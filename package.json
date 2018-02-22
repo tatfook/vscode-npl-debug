@@ -2,7 +2,7 @@
 	"name": "npl-debug",
 	"displayName": "NPL Debug",
 	"version": "0.1.0",
-	"publisher": "LiXizhi",
+	"publisher": "tatfook",
 	"description": "NPL(Neural Parallel Language) Debugger for VS Code.",
 	"author": {
 		"name": "Tatfook Co.",
@@ -109,7 +109,8 @@
 					},
 					"launch": {
 						"required": [
-							"program", "port"
+							"program",
+							"port"
 						],
 						"properties": {
 							"port": {
