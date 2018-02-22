@@ -145,9 +145,12 @@ export class NPLDebugRuntime extends EventEmitter {
 
 	private getRelativePath(filename:string) {
 		filename = filename.replace(/\\/g, "/");
-		filename = filename.replace(this.workspaceDir, "");
-		filename = filename.replace(this.workspaceDir.toLowerCase(), "");
-		if(this.devDir!="")
+		if(this.workspaceDir)
+		{
+			filename = filename.replace(this.workspaceDir, "");
+			filename = filename.replace(this.workspaceDir.toLowerCase(), "");
+		}
+		if(this.devDir)
 		{
 			filename = filename.replace(this.devDir, "");
 			filename = filename.replace(this.devDir.toLowerCase(), "");
@@ -166,6 +169,7 @@ export class NPLDebugRuntime extends EventEmitter {
 		}
 		else if (cmd == "ExpValue") {
 			this.last_eval_result.push(msg.code);
+			this.sendEvent('evalResult', msg.code);
 		}
 		else if (cmd == "exit") {
 			this.stop();
@@ -308,8 +312,9 @@ export class NPLDebugRuntime extends EventEmitter {
 		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=stepout`, json:true}, (error, response, data) =>{});
 	}
 
-	public evaluate() {
+	public evaluate(expression:string) {
 		this.last_eval_result = [];
+		this.expression = expression;
 		var code = this.expression;
 		if (this.expression.indexOf(";") < 0)
 			code = "return " + code;

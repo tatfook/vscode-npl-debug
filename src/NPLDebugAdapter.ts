@@ -33,6 +33,8 @@ export class NPLDebugSession extends LoggingDebugSession {
 	/** mapping from known relative path to real file path on disk */
 	private _sourceMap = {};
 
+	private _last_evaluate_response: DebugProtocol.EvaluateResponse;
+
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
 	 * We configure the default implementation of a debug adapter here.
@@ -86,6 +88,17 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this._runtime.on('open_url', (url) => {
 			open_url(url);
 		});
+		this._runtime.on('evalResult', (result) => {
+			if(this._last_evaluate_response){
+				this._last_evaluate_response.body = {
+					"result" : String(result),
+					"variablesReference": 0
+				}
+				this.sendResponse(this._last_evaluate_response);
+				this._last_evaluate_response = undefined;
+			}
+		});
+
 	}
 
 	/**
@@ -102,9 +115,6 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// make VS Code to use 'evaluate' when hovering over source
 		response.body.supportsEvaluateForHovers = true;
-
-		// make VS Code to show a 'step back' button
-		response.body.supportsStepBack = true;
 
 		this.sendResponse(response);
 
@@ -162,9 +172,16 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
+	protected convertClientLineToDebugger(line: number): number{
+		return line;
+	}
+	protected convertDebuggerLineToClient(line: number): number{
+		return line;
+	}
+
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 
-		const path = <string>args.source.path;
+		const path = this.getRelativePathFromRealPath(args.source.path);
 		const clientLines = args.lines || [];
 
 		// clear all breakpoints for this file
@@ -271,11 +288,6 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments): void {
-		this._runtime.continue();
-		this.sendResponse(response);
-	}
-
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
 		this._runtime.stepover();
 		this.sendResponse(response);
@@ -297,18 +309,11 @@ export class NPLDebugSession extends LoggingDebugSession {
 	};
 
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
-
-		let reply: string | undefined = undefined;
-
-		response.body = {
-			result: reply ? reply : `evaluate(context: '${args.context}', '${args.expression}')`,
-			variablesReference: 0
-		};
-		this.sendResponse(response);
+		this._runtime.evaluate(args.expression);
+		this._last_evaluate_response = response;
 	}
 
 	protected convertDebuggerPathToClient(debuggerPath: string): string {
-		// TODO: append working directory or npl_packages
 		return debuggerPath;
 	}
 
@@ -320,6 +325,16 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	protected loadedSourcesRequest(response: DebugProtocol.LoadedSourcesResponse, args: DebugProtocol.LoadedSourcesArguments) {
 		// TODO:
+	}
+
+	private getRelativePathFromRealPath(filename: string): string | undefined {
+		filename = filename.replace(/\\/g, "/");
+		this._searchPath.forEach((path)=>{
+			filename = filename.replace(path.replace(/\\/g, "/"), "");
+			filename = filename.replace(path.replace(/\\/g, "/").toLowerCase(), "");
+		});
+		filename = filename.replace(/.*npl_packages\/[^\/]+\//g, "");
+		return filename;
 	}
 
 	/**
@@ -339,7 +354,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 			this._searchPath.forEach(searchpath => {
 				if(!realpath)
 				{
-					let filePath = `${searchpath}/${path}`;
+					let filePath = `${searchpath}${path}`;
 					if(fs.existsSync(filePath)){
 						realpath = filePath;
 					}
@@ -374,6 +389,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	private addSearchPath(paths: any) {
 		paths.forEach(path => {
+			path = path.replace(/\\/g, "/");
+			if(!path.endsWith("/"))
+				path = path + "/";
 			this._searchPath.push(path);
 		});
 	}
