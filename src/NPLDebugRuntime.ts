@@ -212,8 +212,9 @@ export class NPLDebugRuntime extends EventEmitter {
 
 
 	/** attach to a running NPL runtime with a given port on localhost.  */
-	public attach(port?: number) {
+	public attach(port?: number, timeout?:number) {
 		this._hostPort = port || this._hostPort;
+		// TODO: support timeout in seconds?
 		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=attach`, json:true}, (error, response, data) =>{
 			if(error){
 				this.error(`error: NPLRuntime not detected on ${this.GetHost()}`);

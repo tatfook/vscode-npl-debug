@@ -1,20 +1,23 @@
 # VS Code NPL Debug
 
-**NPL Debug** uses `NPL HTTP Debugger` adapter for Visual Studio Code.
-It supports *step*, *continue*, *breakpoints*, *exceptions*
+**NPL Debug** uses [NPL HTTP Debugger](https://github.com/LiXizhi/NPLRuntime/wiki/DebugAndLog) adapter for Visual Studio Code.
+It supports *step*, *continue*, *breakpoints*, etc.
 
 More information about how to develop a new debug adapter can be found
-[here](https://code.visualstudio.com/docs/extensions/example-debuggers).
+[here](https://code.visualstudio.com/docs/extensions/example-debuggers). Here is a good reference of [chrome debugger](https://github.com/Microsoft/vscode-chrome-debug-core/blob/master/src/chrome/chromeDebugAdapter.ts)
 
 ## Using NPL Debug
 
 * Install the **NPL Debug** extension in VS Code.
-* Create a new 'program' file `readme.md` and enter several lines of arbitrary text.
+* Run NPL program in the current workspace directory with HTTP debug enabled.
 * Switch to the debug viewlet and press the gear dropdown.
-* Select the debug environment "NPL Debug".
+* Select the debug environment "NPL Debug Attach".
 * Press the green 'play' button to start debugging.
 
 You can now 'step through' the `readme.md` file, set and hit breakpoints, and run into exceptions (if the word exception appears in a line).
+
+> vscode support multiple debug sessions, so one can install `Chrome Debugger` and start it alongside `NPL debugger`,
+so that one can debug both frontend and backend code in the same vscode ide.
 
 ## Build and Debug
 
@@ -22,15 +25,13 @@ You can now 'step through' the `readme.md` file, set and hit breakpoints, and ru
 git clone https://github.com/tatfook/vscode-npl-debug.git
 cd vscode-npl-debug
 npm install
-## in case of root user, use following
-npm install --unsafe-perm
 ```
 
 * Open the project folder in VS Code.
 * In debug panel, select `Extension + Server`,  Press `F5` to build and launch NPL Debug in another VS Code window. In that window:
-  * Open a new workspace, create a new 'program' file `readme.md` and enter several lines of arbitrary text.
+  * Run NPL program in the current workspace directory with HTTP debug enabled.
   * Switch to the debug viewlet and press the gear dropdown.
-  * Select the debug environment "NPL Debug".
+  * Select the debug environment "NPL Debug Attach" (add `debugServer:4711` to `launch.json`).
   * Press `F5` to start debugging.
 
 Or in `launch.json`

@@ -197,8 +197,12 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		const stk = this._runtime.stack(startFrame, endFrame);
 
+		stk.frames.forEach(frame =>{
+			this.translateStackFrame(frame);
+		});
+
 		response.body = {
-			stackFrames: stk.frames.map(f => new StackFrame(f.index, f.name, this.createSource(f.file), this.convertDebuggerLineToClient(f.line))),
+			stackFrames: stk.frames,
 			totalFrames: stk.count
 		};
 		this.sendResponse(response);
@@ -301,9 +305,35 @@ export class NPLDebugSession extends LoggingDebugSession {
 		return debuggerPath;
 	}
 
+	protected sourceRequest(response: DebugProtocol.SourceResponse, args: DebugProtocol.SourceArguments){
+		// TODO:
+		response.body.content = "file NOT found!";
+		this.sendResponse(response);
+	}
+
+	protected loadedSourcesRequest(response: DebugProtocol.LoadedSourcesResponse, args: DebugProtocol.LoadedSourcesArguments){
+		// TODO:
+	}
+
+	private getRealPathFromRelativePath(path:string): string | undefined {
+		// TODO
+		return undefined;
+	}
+
 	//---- helpers
 
+	private translateStackFrame(frame: any){
+		let name = basename(frame.file);
+		let path:string|undefined = this.convertDebuggerPathToClient(frame.file);
+		let realpath = this.getRealPathFromRelativePath(path);
+		if(!realpath){
+			name = `${path}: File NOT FOUND`;
+			path = undefined;
+		}
+		frame.source = new Source(name, path);
+	}
+
 	private createSource(filePath: string): Source {
-		return new Source(basename(filePath), this.convertDebuggerPathToClient(filePath), undefined, undefined, 'NPL-adapter-data');
+		return new Source(basename(filePath), filePath);
 	}
 }
