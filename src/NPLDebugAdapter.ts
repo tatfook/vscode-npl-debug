@@ -28,6 +28,8 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	private _configurationDone = new Subject();
 
+	private _searchPath: Array<string> = [];
+
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
 	 * We configure the default implementation of a debug adapter here.
@@ -125,6 +127,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
+		// get search path
+		this._searchPath = args.searchpath;
+
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 
@@ -138,7 +143,8 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
-
+		// get search path
+		this._searchPath = args.searchpath;
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 

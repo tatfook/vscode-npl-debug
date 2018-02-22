@@ -58,6 +58,10 @@ class NPLConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.stopOnEntry = true;
 			}
 		}
+		config.searchpath = config.searchpath || [];
+		if(folder){
+			config.searchpath.push(folder.uri.fsPath);
+		}
 
 		if (!config.program && config.type == "launch") {
 			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {

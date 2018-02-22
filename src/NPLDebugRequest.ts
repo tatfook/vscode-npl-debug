@@ -20,6 +20,8 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	stopOnEntry?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
+	/** array of search paths */
+	searchpath?: Array<string>;
 }
 
 export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
@@ -29,4 +31,6 @@ export interface AttachRequestArguments extends DebugProtocol.AttachRequestArgum
 	stopOnEntry?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
+	/** array of search paths */
+	searchpath?: Array<string>;
 }
