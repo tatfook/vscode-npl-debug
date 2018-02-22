@@ -9,12 +9,13 @@ import {
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
-import {showInformationMessage, open_url} from './VscodeWrapper';
+import { showInformationMessage, open_url } from './VscodeWrapper';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
+var fs = require('fs');
 import { NPLDebugRuntime, NPLBreakpoint, NPLScriptBreakpoint } from './NPLDebugRuntime';
 const { Subject } = require('await-notify');
-import {LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
+import { LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
 
 
 export class NPLDebugSession extends LoggingDebugSession {
@@ -29,6 +30,8 @@ export class NPLDebugSession extends LoggingDebugSession {
 	private _configurationDone = new Subject();
 
 	private _searchPath: Array<string> = [];
+	/** mapping from known relative path to real file path on disk */
+	private _sourceMap = {};
 
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
@@ -73,10 +76,10 @@ export class NPLDebugSession extends LoggingDebugSession {
 			logger.log(text, level);
 		});
 		this._runtime.on('message', (text, callback) => {
-			if(callback){
+			if (callback) {
 				showInformationMessage(text, "OK", callback);
 			}
-			else{
+			else {
 				showInformationMessage(text);
 			}
 		});
@@ -127,8 +130,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
-		// get search path
-		this._searchPath = args.searchpath;
+		this.addSearchPath(args.searchpath);
 
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
@@ -143,8 +145,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
-		// get search path
-		this._searchPath = args.searchpath;
+
+		this.addSearchPath(args.searchpath);
+
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 
@@ -154,8 +157,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected async disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments)
-	{
+	protected async disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments) {
 		this._runtime.stop();
 		this.sendResponse(response);
 	}
@@ -170,9 +172,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		// set and verify breakpoint locations
 		const actualBreakpoints = clientLines.map(l => {
-			let npl_bp : NPLScriptBreakpoint = this._runtime.setBreakpoint(path, this.convertClientLineToDebugger(l));
+			let npl_bp: NPLScriptBreakpoint = this._runtime.setBreakpoint(path, this.convertClientLineToDebugger(l));
 
-			const bp = <DebugProtocol.Breakpoint> new Breakpoint(npl_bp.verified || true, this.convertDebuggerLineToClient(npl_bp.line));
+			const bp = <DebugProtocol.Breakpoint>new Breakpoint(npl_bp.verified || true, this.convertDebuggerLineToClient(npl_bp.line));
 			// bp.id = id;
 			return bp;
 		});
@@ -203,7 +205,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		const stk = this._runtime.stack(startFrame, endFrame);
 
-		stk.frames.forEach(frame =>{
+		stk.frames.forEach(frame => {
 			this.translateStackFrame(frame);
 		});
 
@@ -269,27 +271,27 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments) : void {
+	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, args: DebugProtocol.ReverseContinueArguments): void {
 		this._runtime.continue();
 		this.sendResponse(response);
- 	}
+	}
 
 	protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments): void {
 		this._runtime.stepover();
 		this.sendResponse(response);
 	}
 
-	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments){
+	protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments) {
 		this._runtime.stepinto();
 		this.sendResponse(response);
 	}
 
-	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments){
+	protected stepOutRequest(response: DebugProtocol.StepOutResponse, args: DebugProtocol.StepOutArguments) {
 		this._runtime.stepout();
 		this.sendResponse(response);
 	}
 
-	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments){
+	protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments) {
 		this._runtime.pause();
 		this.sendResponse(response);
 	};
@@ -305,41 +307,74 @@ export class NPLDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected convertDebuggerPathToClient(debuggerPath: string): string
-	{
+	protected convertDebuggerPathToClient(debuggerPath: string): string {
 		// TODO: append working directory or npl_packages
 		return debuggerPath;
 	}
 
-	protected sourceRequest(response: DebugProtocol.SourceResponse, args: DebugProtocol.SourceArguments){
+	protected sourceRequest(response: DebugProtocol.SourceResponse, args: DebugProtocol.SourceArguments) {
 		// TODO:
 		response.body.content = "file NOT found!";
 		this.sendResponse(response);
 	}
 
-	protected loadedSourcesRequest(response: DebugProtocol.LoadedSourcesResponse, args: DebugProtocol.LoadedSourcesArguments){
+	protected loadedSourcesRequest(response: DebugProtocol.LoadedSourcesResponse, args: DebugProtocol.LoadedSourcesArguments) {
 		// TODO:
 	}
 
-	private getRealPathFromRelativePath(path:string): string | undefined {
-		// TODO
-		return undefined;
+	/**
+	 * we will cache find found result
+	 * @param path relative file path
+	 */
+	private getRealPathFromRelativePath(path: string): string | undefined {
+		let realpath = this._sourceMap[path];
+		if (typeof(realpath) == "string"){
+			return realpath;
+		}
+		else if(typeof(realpath) == "bool" && !realpath){
+			realpath = undefined;
+		}
+		else
+		{
+			this._searchPath.forEach(searchpath => {
+				if(!realpath)
+				{
+					let filePath = `${searchpath}/${path}`;
+					if(fs.existsSync(filePath)){
+						realpath = filePath;
+					}
+				}
+			});
+			this._sourceMap[path] = realpath ? realpath : false;
+		}
+		return realpath;
 	}
 
 	//---- helpers
 
-	private translateStackFrame(frame: any){
-		let name = basename(frame.file);
-		let path:string|undefined = this.convertDebuggerPathToClient(frame.file);
+	private translateStackFrame(frame: any) {
+		frame.source = {"name":basename(frame.file), "path": frame.file};
+		let path: string | undefined = this.convertDebuggerPathToClient(frame.file);
 		let realpath = this.getRealPathFromRelativePath(path);
-		if(!realpath){
-			name = `${path}: File NOT FOUND`;
-			path = undefined;
+		if (!realpath) {
+			// if file is not found
+			frame.source.name = `${path}:FileNotFound`;
+			frame.source.path = undefined;
+			// according to this issue: https://github.com/Microsoft/vscode-cpptools/issues/811
+			frame.source.presentationHint = 'deemphasize';
 		}
-		frame.source = new Source(name, path);
+		else{
+			frame.source.path = realpath;
+		}
 	}
 
 	private createSource(filePath: string): Source {
 		return new Source(basename(filePath), filePath);
+	}
+
+	private addSearchPath(paths: any) {
+		paths.forEach(path => {
+			this._searchPath.push(path);
+		});
 	}
 }

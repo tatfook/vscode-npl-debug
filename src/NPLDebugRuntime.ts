@@ -346,7 +346,8 @@ export class NPLDebugRuntime extends EventEmitter {
 				index: i,
 				name: `${i}: in function ${frame.name}()`,
 				file: frame.source,
-				line: frame.line
+				line: frame.currentline,
+				column: 0
 			});
 		}
 		return {

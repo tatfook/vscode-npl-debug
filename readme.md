@@ -14,7 +14,21 @@ More information about how to develop a new debug adapter can be found
 * Select the debug environment "NPL Debug Attach".
 * Press the green 'play' button to start debugging.
 
-You can now 'step through' the `readme.md` file, set and hit breakpoints, and run into exceptions (if the word exception appears in a line).
+One can specify searchpath for additional folders when opening source files. Your `launch.json` could look like this one:
+The `${workspaceFolder}` is always added to search path by default.
+```js
+  {
+    "type": "NPL",
+    "request": "attach",
+    "name": "NPL Http Attach",
+    "port": 8099,
+    "trace": false,
+    "searchpath": [
+      "${workspaceFolder}/npl_packages/main",
+      "${workspaceFolder}/npl_packages/paracraft"
+    ]
+  }
+```
 
 > vscode support multiple debug sessions, so one can install `Chrome Debugger` and start it alongside `NPL debugger`,
 so that one can debug both frontend and backend code in the same vscode ide.
