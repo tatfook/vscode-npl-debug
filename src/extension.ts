@@ -5,10 +5,9 @@
  */
 
 'use strict';
-
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
-import { NPLDebugSession } from './NPLDebug';
+import { NPLDebugSession } from './NPLDebugAdapter';
 import * as Net from 'net';
 
 /*
@@ -65,7 +64,7 @@ class NPLConfigurationProvider implements vscode.DebugConfigurationProvider {
 			});
 		}
 
-		if (EMBED_DEBUG_ADAPTER) {
+		if (config.debugServer && EMBED_DEBUG_ADAPTER) {
 			// start port listener on launch of first debug session
 			if (!this._server) {
 
@@ -76,7 +75,6 @@ class NPLConfigurationProvider implements vscode.DebugConfigurationProvider {
 					session.start(<NodeJS.ReadableStream>socket, socket);
 				}).listen(0);
 			}
-
 			// make VS Code connect to debug server instead of launching debug adapter
 			config.debugServer = this._server.address().port;
 		}
