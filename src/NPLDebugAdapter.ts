@@ -9,7 +9,7 @@ import {
 	InitializedEvent, TerminatedEvent, StoppedEvent, BreakpointEvent, OutputEvent,
 	Thread, StackFrame, Scope, Source, Handles, Breakpoint
 } from 'vscode-debugadapter';
-// import * as vscode from 'vscode';
+import {showInformationMessage, open_url} from './VscodeWrapper';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
 import { NPLDebugRuntime, NPLBreakpoint, NPLScriptBreakpoint } from './NPLDebugRuntime';
@@ -18,7 +18,6 @@ import {LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest
 
 
 export class NPLDebugSession extends LoggingDebugSession {
-
 	// we don't support multiple threads, so we can use a hardcoded ID for the default thread
 	private static THREAD_ID = 1;
 
@@ -35,7 +34,6 @@ export class NPLDebugSession extends LoggingDebugSession {
 	 */
 	public constructor() {
 		super("NPL-debug.txt");
-
 		// this debugger uses zero-based lines and columns
 		this.setDebuggerLinesStartAt1(false);
 		this.setDebuggerColumnsStartAt1(false);
@@ -73,21 +71,15 @@ export class NPLDebugSession extends LoggingDebugSession {
 			logger.log(text, level);
 		});
 		this._runtime.on('message', (text, callback) => {
-			/*
 			if(callback){
-				vscode.window.showInformationMessage(text, "OK").then((item)=>{
-					if(item == "OK"){
-						callback();
-					}
-				});
+				showInformationMessage(text, "OK", callback);
 			}
 			else{
-				vscode.window.showInformationMessage(text);
+				showInformationMessage(text);
 			}
-			*/
 		});
 		this._runtime.on('open_url', (url) => {
-			// vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
+			open_url(url);
 		});
 	}
 

@@ -8,6 +8,7 @@
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import { NPLDebugSession } from './NPLDebugAdapter';
+import {SetVsCodeImplementation} from './VscodeWrapper';
 import * as Net from 'net';
 
 /*
@@ -18,7 +19,7 @@ import * as Net from 'net';
 const EMBED_DEBUG_ADAPTER = true;
 
 export function activate(context: vscode.ExtensionContext) {
-
+	SetVsCodeImplementation(vscode);
 	// context.subscriptions.push(vscode.commands.registerCommand('extension.NPL-debug.getProgramName', config => {
 	// 	return vscode.window.showInputBox({
 	// 		placeHolder: "Please enter the name of a markdown file in the workspace folder",

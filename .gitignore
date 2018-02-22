@@ -2,7 +2,7 @@
 node_modules/
 node_modules_/
 out/
-npm-debug.log
+npm-debug.*
 npl-debug.txt
 *.vsix
 log.txt
