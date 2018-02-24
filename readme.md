@@ -6,7 +6,7 @@ It supports *step*, *continue*, *breakpoints*, etc.
 More information about how to develop a new debug adapter can be found
 [here](https://code.visualstudio.com/docs/extensions/example-debuggers). Here is a good reference of [chrome debugger](https://github.com/Microsoft/vscode-chrome-debug-core/blob/master/src/chrome/chromeDebugAdapter.ts)
 
-## Using NPL Debug
+## Using NPL Debug In Attach Mode
 
 * Install the **NPL Debug** extension in VS Code.
 * Run NPL program in the current workspace directory with HTTP debug enabled.
@@ -32,6 +32,40 @@ The `${workspaceFolder}` is always added to search path by default.
 
 > vscode support multiple debug sessions, so one can install `Chrome Debugger` and start it alongside `NPL debugger`,
 so that one can debug both frontend and backend code in the same vscode ide.
+
+parameters:
+- port: this is the NPL http debugger port on the target running application.
+- searchpath: where the debugger should look for corresponding source code when a breakpoint is hit.
+- trace: output more information to the debug console.
+
+### Using Launch Mode
+Attach mode is always recommended for advanced users. Because, when no debugger is detached, the app is running in full speed. And one can attach,detach multiple times to the same running application.
+
+For users who want to debug the first script loaded, we also provide the launch mode. The difference is that one no longer needs to start the NPL runtime manually, instead one must specify the runtimeExecutable, bootstrapper, etc in `launch.json` like below.
+
+```json
+{
+    "type": "NPL",
+    "request": "launch",
+    "name": "Launch NPL",
+    "runtimeExecutable": "D:\\lxzsrc\\ParaCraftSDK\\redist\\paraengineclient.exe",
+    "bootstrapper": "script/apps/Aries/main_loop.lua",
+    "cmdlineParams": "mc=true noupdate=true",
+    "port": 8099,
+    "searchpath": [
+      "${workspaceFolder}/npl_packages/main",
+      "${workspaceFolder}/npl_packages/paracraft"
+    ],
+    "exitAppOnStop": true,
+    "trace": false
+},
+```
+
+parameters:
+- runtimeExecutable: if not specified or "npl", we will search in environment path variable for a installed NPL runtime executable. Under linux or mac, this is usually `/usr/local/bin/npl`
+- bootstrapper: this is the main entry point of the application.
+- cmdlineParams: additional command line parameters without bootstrapper and port.
+- exitAppOnStop: whether to exit the application when the user stopped debugging
 
 ## Build and Debug
 

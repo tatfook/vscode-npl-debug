@@ -25,6 +25,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	cwd?:string;
 	timeout?:number;
 	cmdlineParams?: string;
+	exitAppOnStop?:boolean;
 }
 
 export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {

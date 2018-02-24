@@ -40,6 +40,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 	/** the main bootstrapper file that we are debugging */
 	private _bootstrapper:string = "";
 
+	/** exit the application when the user stopped debugging */
+	private _exitAppOnStop: boolean = true;
+
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
 	 * We configure the default implementation of a debug adapter here.
@@ -151,7 +154,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		this.addSearchPath(args.searchpath);
 		this._bootstrapper = args.bootstrapper || "";
-
+		this._exitAppOnStop = args.exitAppOnStop;
 		const options = {
 			detached: true,
 			cwd: args.cwd
@@ -190,7 +193,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 	}
 
 	protected async attachRequest(response: DebugProtocol.AttachResponse, args: AttachRequestArguments) {
-
+		this._exitAppOnStop = false;
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
@@ -207,6 +210,8 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	protected async disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments) {
 		this._runtime.stop();
+		if(this._exitAppOnStop)
+			this._runtime.exitApp();
 		this.sendResponse(response);
 	}
 
@@ -287,6 +292,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
 
 		const variables = new Array<DebugProtocol.Variable>();
+		/*
 		const id = this._variableHandles.get(args.variablesReference);
 		if (id !== null) {
 			variables.push({
@@ -314,7 +320,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 				variablesReference: this._variableHandles.create("object_")
 			});
 		}
-
+		*/
 		response.body = {
 			variables: variables
 		};
@@ -472,7 +478,13 @@ function GetDefaultNPLRuntimePath(): string | undefined {
 			}
 		}
 	}
-	if (fs.existsSync("npl")) {
-		return "npl";
+	else
+	{
+		if (fs.existsSync("npl")) {
+			return "npl";
+		}
+		if (fs.existsSync("/usr/local/bin/npl")) {
+			return "/usr/local/bin/npl";
+		}
 	}
 }

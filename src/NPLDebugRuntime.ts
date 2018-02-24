@@ -288,6 +288,10 @@ export class NPLDebugRuntime extends EventEmitter {
 		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=setmainloop&bootstrapper=${mainloop}`, json:true}, (error, response, data) =>{});
 	}
 
+	public exitApp(mainloop:string){
+		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=exitapp`, json:true}, (error, response, data) =>{});
+	}
+
 	public end(){
 		this.sendEvent('end');
 	}

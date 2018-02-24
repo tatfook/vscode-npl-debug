@@ -157,6 +157,11 @@
 								"description": "timeout to wait for NPL process to launch",
 								"default": 10000
 							},
+							"exitAppOnStop": {
+								"type": "boolean",
+								"description": "exit the application when the user stopped debugging",
+								"default": true
+							},
 							"trace": {
 								"type": "boolean",
 								"description": "Enable logging of the Debug Adapter Protocol.",
@@ -183,6 +188,7 @@
 						"cmdlineParams": "",
 						"port": 8099,
 						"searchpath": [],
+						"exitAppOnStop": true,
 						"trace": false
 					}
 				],
@@ -211,6 +217,7 @@
 							"cmdlineParams": "",
 							"port": 8099,
 							"searchpath": [],
+							"exitAppOnStop": true,
 							"trace": false
 						}
 					}
