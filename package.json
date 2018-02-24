@@ -95,10 +95,20 @@
 								"description": "Automatically stop after launch.",
 								"default": true
 							},
+							"cwd": {
+								"type": ["string","null"],
+								"description": "current working directory. default to workspaceFolder",
+								"default": null
+							},
 							"searchpath": {
 								"type": "array",
-								"description": "array of search paths",
+								"description": "array of search paths. current working directory is added by default",
 								"default": []
+							},
+							"timeout": {
+								"type": "number",
+								"description": "timeout to wait for NPL process to launch",
+								"default": 10000
 							},
 							"trace": {
 								"type": "boolean",
@@ -109,8 +119,7 @@
 					},
 					"launch": {
 						"required": [
-							"program",
-							"port"
+							"bootstrapper"
 						],
 						"properties": {
 							"port": {
@@ -118,20 +127,30 @@
 								"description": "remote http debug port number",
 								"default": 8099
 							},
-							"program": {
-								"type": "string",
-								"description": "specify the main loop file",
-								"default": "helloworld.npl"
+							"runtimeExecutable": {
+								"type": ["string","null"],
+								"description": "the name or path to the NPL runtime executable",
+								"default": null
+							},
+							"bootstrapper": {
+								"type": ["string","null"],
+								"description": "the main NPL script file",
+								"default": null
 							},
 							"searchpath": {
 								"type": "array",
 								"description": "array of search paths",
 								"default": []
 							},
-							"stopOnEntry": {
-								"type": "boolean",
-								"description": "Automatically stop after launch.",
-								"default": true
+							"cwd": {
+								"type": ["string","null"],
+								"description": "current working directory. default to workspaceFolder",
+								"default": null
+							},
+							"timeout": {
+								"type": "number",
+								"description": "timeout to wait for NPL process to launch",
+								"default": 10000
 							},
 							"trace": {
 								"type": "boolean",
@@ -145,7 +164,7 @@
 					{
 						"type": "NPL",
 						"request": "attach",
-						"name": "Attach Http Debugger",
+						"name": "Attach NPL",
 						"port": 8099,
 						"searchpath": [],
 						"trace": false
@@ -153,24 +172,24 @@
 					{
 						"type": "NPL",
 						"request": "launch",
-						"name": "Launch NPL process",
-						"program": "npl",
+						"name": "Launch NPL",
+						"runtimeExecutable": "npl",
+						"bootstrapper": "main.lua",
 						"port": 8099,
 						"searchpath": [],
-						"trace": false,
-						"stopOnEntry": true
+						"trace": false
 					}
 				],
 				"configurationSnippets": [
 					{
 						"label": "NPL Debug: Attach",
-						"description": "NPL HTTP web debugger",
+						"description": "attach to NPL HTTP web debugger",
 						"body": {
 							"type": "NPL",
 							"request": "attach",
-							"name": "Attach Http Debugger",
-							"searchpath": [],
+							"name": "Attach NPL",
 							"port": 8099,
+							"searchpath": [],
 							"trace": false
 						}
 					},
@@ -180,12 +199,12 @@
 						"body": {
 							"type": "NPL",
 							"request": "launch",
-							"name": "Launch Http Debugger",
-							"searchpath": [],
-							"program": "${workspaceFolder}/readme.md",
+							"name": "Launch NPL",
+							"runtimeExecutable": "npl",
+							"bootstrapper": "main.lua",
 							"port": 8099,
-							"trace": false,
-							"stopOnEntry": true
+							"searchpath": [],
+							"trace": false
 						}
 					}
 				],

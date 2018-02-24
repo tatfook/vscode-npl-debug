@@ -60,7 +60,8 @@ class NPLConfigurationProvider implements vscode.DebugConfigurationProvider {
 		}
 		config.searchpath = config.searchpath || [];
 		if(folder){
-			config.searchpath.push(folder.uri.fsPath);
+			config.cwd = config.cwd || folder.uri.fsPath;
+			config.searchpath.push(config.cwd);
 		}
 
 		if (!config.program && config.type == "launch") {

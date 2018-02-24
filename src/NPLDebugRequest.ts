@@ -16,21 +16,22 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	port: number;
 	/** An absolute path to the "program" to debug. */
 	program: string;
-	/** Automatically stop target after launch. If not specified, target does not stop. */
-	stopOnEntry?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
 	/** array of search paths */
 	searchpath?: Array<string>;
+	runtimeExecutable?:string;
+	bootstrapper?:string;
+	cwd?:string;
+	timeout?:number;
 }
 
 export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
 	/** port number */
 	port: number;
-	/** Automatically stop target after launch. If not specified, target does not stop. */
-	stopOnEntry?: boolean;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
 	/** array of search paths */
 	searchpath?: Array<string>;
+	timeout?:number;
 }

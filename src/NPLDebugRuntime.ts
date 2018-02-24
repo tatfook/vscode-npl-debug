@@ -118,18 +118,30 @@ export class NPLDebugRuntime extends EventEmitter {
 	 */
 	private addBreakpoint(filename:string, line:number) : NPLScriptBreakpoint | undefined {
 		if (filename && filename != "" && line != null && this.getBreakpointIndex(filename, line) < 0) {
-			request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=addbreakpoint&filename=${encodeURIComponent(filename)}&line=${encodeURIComponent(String(line))}`, json:true}, (error, response, data) =>{
-			});
+			if(this.IsAttached()){
+				request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=addbreakpoint&filename=${encodeURIComponent(filename)}&line=${encodeURIComponent(String(line))}`, json:true}, (error, response, data) =>{});
+			}
 			var bp:NPLScriptBreakpoint = { filename: filename, line: line };
 			this.breakpoints.push(bp);
 			return bp;
 		}
 	}
 
+	private uploadAllBreakpoints() 	{
+		if(this.IsAttached())
+		{
+			this.breakpoints.forEach(bp => {
+				request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=addbreakpoint&filename=${encodeURIComponent(bp.filename)}&line=${encodeURIComponent(String(bp.line))}`, json:true}, (error, response, data) =>{});
+			});
+		}
+	}
+
 	private removeBreakpoint(index:number) {
 		var bp = this.breakpoints[index];
 		if (bp.filename != null && bp.filename != "" && bp.line != null) {
-			request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=removebreakpoint&filename=${encodeURIComponent(bp.filename)}&line=${encodeURIComponent(String(bp.line))}`, json:true}, (error, response, data) =>{});
+			if(this.IsAttached()){
+				request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=removebreakpoint&filename=${encodeURIComponent(bp.filename)}&line=${encodeURIComponent(String(bp.line))}`, json:true}, (error, response, data) =>{});
+			}
 			if (index != null)
 				this.breakpoints.splice(index, 1);
 		}
@@ -218,6 +230,7 @@ export class NPLDebugRuntime extends EventEmitter {
 	/** attach to a running NPL runtime with a given port on localhost.  */
 	public attach(port?: number, timeout?:number) {
 		this._hostPort = port || this._hostPort;
+
 		// TODO: support timeout in seconds?
 		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=attach`, json:true}, (error, response, data) =>{
 			if(error){
@@ -229,7 +242,8 @@ export class NPLDebugRuntime extends EventEmitter {
 				return;
 			}
 			this.startTimer();
-            this.status = "running";
+			this.status = "running";
+			this.uploadAllBreakpoints();
 		});
 	}
 
@@ -339,6 +353,10 @@ export class NPLDebugRuntime extends EventEmitter {
 			this.attach();
 	}
 
+	/** return true if debugger is already attached to a running NPL runtime instance over http protocol. */
+	public IsAttached(): boolean {
+		return (this.status === "running") || (this.status === "paused")
+	}
 	/**
 	 * Returns stacktrace
 	 */

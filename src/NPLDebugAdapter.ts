@@ -3,6 +3,9 @@
  * email: lixizhi@yeah.net
  * date: 2018/2.19
  */
+import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
 	Logger, logger,
 	LoggingDebugSession,
@@ -12,11 +15,10 @@ import {
 import { showInformationMessage, open_url } from './VscodeWrapper';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
-var fs = require('fs');
 import { NPLDebugRuntime, NPLBreakpoint, NPLScriptBreakpoint } from './NPLDebugRuntime';
 const { Subject } = require('await-notify');
 import { LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
-
+import {spawn, ChildProcess, execSync} from 'child_process';
 
 export class NPLDebugSession extends LoggingDebugSession {
 	// we don't support multiple threads, so we can use a hardcoded ID for the default thread
@@ -142,11 +144,35 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 		this.addSearchPath(args.searchpath);
 
+		const options = {
+			detached: true,
+			cwd: args.cwd
+		};
+		let nplExecutablePath = args.runtimeExecutable;
+
+		if(!nplExecutablePath || nplExecutablePath === "npl")
+			nplExecutablePath = GetDefaultNPLRuntimePath();
+		else
+			nplExecutablePath = findExecutable(nplExecutablePath);
+
+		if(!nplExecutablePath){
+			response.success = false;
+			response.message = "NPL runtime executable not found."
+			this.sendResponse(response);
+			return;
+		}
+		let nplArgs:string[] = [];
+		nplArgs.push(`port=${args.port}`);
+		nplArgs.push("bootstrapper=script/apps/WebServer/WebServer.lua");
+		const nplRuntime = spawn(nplExecutablePath, nplArgs, options);
+		nplRuntime.unref();
+
+
 		// wait until configuration has finished (and configurationDoneRequest has been called)
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		this._runtime.start(args.program, args.port, !!args.stopOnEntry);
+		this._runtime.attach(args.port);
 
 		this.sendResponse(response);
 	}
@@ -396,5 +422,45 @@ export class NPLDebugSession extends LoggingDebugSession {
 				path = path + "/";
 			this._searchPath.push(path);
 		});
+	}
+}
+
+function findExecutable(program: string): string | undefined {
+	if (process.platform === 'win32' && !path.extname(program)) {
+		const PATHEXT = process.env['PATHEXT'];
+		if (PATHEXT) {
+			const executableExtensions = PATHEXT.split(';');
+			for (const extension of executableExtensions) {
+				const path = program + extension;
+				if (fs.existsSync(path)) {
+					return path;
+				}
+			}
+		}
+	}
+
+	if (fs.existsSync(program)) {
+		return program;
+	}
+
+	return undefined;
+}
+
+function GetDefaultNPLRuntimePath(): string | undefined {
+	if(process.platform === 'win32')
+	{
+		const PATH = process.env["PATH"];
+		if (PATH) {
+			const executableSearchPaths = PATH.split(';');
+			for (const searchpath of executableSearchPaths) {
+				const path = searchpath + "/paraengineclient.exe";
+				if (fs.existsSync(path)) {
+					return path;
+				}
+			}
+		}
+	}
+	if (fs.existsSync("npl")) {
+		return "npl";
 	}
 }
