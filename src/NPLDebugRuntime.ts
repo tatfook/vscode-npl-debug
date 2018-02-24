@@ -43,7 +43,6 @@ export class NPLDebugRuntime extends EventEmitter {
 	private devDir:string;
 	private pollTimer;
 
-
 	constructor() {
 		super();
 	}
@@ -226,25 +225,42 @@ export class NPLDebugRuntime extends EventEmitter {
 		this.console_output(`${msg.filename}:${msg.param1},${msg.param2},${msg.code}`);
 	}
 
-
-	/** attach to a running NPL runtime with a given port on localhost.  */
-	public attach(port?: number, timeout?:number) {
-		this._hostPort = port || this._hostPort;
-
-		// TODO: support timeout in seconds?
+	private try_attach(port:number, timeout:number, attach_starttime:number)
+	{
 		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=attach`, json:true}, (error, response, data) =>{
 			if(error){
-				this.error(`error: NPLRuntime not detected on ${this.GetHost()}`);
-				this.message(`NPLRuntime not detected on ${this.GetHost()}. Do you want to see help page?`, ()=>{
-					this.open_url(this._debuggerHelpUrl);
-				});
-				this.end();
-				return;
+				var d = new Date();
+				var curTime = d.getTime();
+				if((attach_starttime + timeout) <= curTime)
+				{
+					this.error(`error: NPLRuntime not detected on ${this.GetHost()}`);
+					this.message(`NPLRuntime not detected on ${this.GetHost()}. Do you want to see help page?`, ()=>{
+						this.open_url(this._debuggerHelpUrl);
+					});
+					this.end();
+					return;
+				}
+				else
+				{
+					// try again after 1 second until timeout
+					setTimeout(()=>{
+						this.try_attach(port, timeout, attach_starttime)
+					}, 1000);
+				}
 			}
 			this.startTimer();
 			this.status = "running";
 			this.uploadAllBreakpoints();
+			this.sendEvent('NPLRuntimeAttached');
 		});
+	}
+
+	/** attach to a running NPL runtime with a given port on localhost.  */
+	public attach(port?: number, timeout?:number) {
+		this._hostPort = port || this._hostPort;
+		var d = new Date();
+		let attach_starttime:number = d.getTime();
+		this.try_attach(this._hostPort, timeout || 0, attach_starttime);
 	}
 
 	/**
@@ -266,6 +282,10 @@ export class NPLDebugRuntime extends EventEmitter {
 		});
 		this.status = "detached";
 		this.stackinfo = [];
+	}
+
+	public setMainLoop(mainloop:string){
+		request.get({url: `${this.GetHost()}ajax/vscode_debugger?action=setmainloop&bootstrapper=${mainloop}`, json:true}, (error, response, data) =>{});
 	}
 
 	public end(){

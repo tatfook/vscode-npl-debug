@@ -37,6 +37,9 @@ export class NPLDebugSession extends LoggingDebugSession {
 
 	private _last_evaluate_response: DebugProtocol.EvaluateResponse | undefined;
 
+	/** the main bootstrapper file that we are debugging */
+	private _bootstrapper:string = "";
+
 	/**
 	 * Creates a new debug adapter that is used for one debug session.
 	 * We configure the default implementation of a debug adapter here.
@@ -100,7 +103,11 @@ export class NPLDebugSession extends LoggingDebugSession {
 				this._last_evaluate_response = undefined;
 			}
 		});
-
+		this._runtime.on('NPLRuntimeAttached', (result) => {
+			if(this._bootstrapper !== ""){
+				this._runtime.setMainLoop(this._bootstrapper);
+			}
+		});
 	}
 
 	/**
@@ -143,6 +150,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
 
 		this.addSearchPath(args.searchpath);
+		this._bootstrapper = args.bootstrapper || "";
 
 		const options = {
 			detached: true,
@@ -162,8 +170,12 @@ export class NPLDebugSession extends LoggingDebugSession {
 			return;
 		}
 		let nplArgs:string[] = [];
+		if(args.cmdlineParams && args.cmdlineParams!==""){
+			nplArgs.push(args.cmdlineParams);
+		}
 		nplArgs.push(`port=${args.port}`);
 		nplArgs.push("bootstrapper=script/apps/WebServer/WebServer.lua");
+
 		const nplRuntime = spawn(nplExecutablePath, nplArgs, options);
 		nplRuntime.unref();
 
@@ -172,7 +184,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		this._runtime.attach(args.port);
+		this._runtime.attach(args.port, args.timeout || 5000);
 
 		this.sendResponse(response);
 	}
@@ -188,7 +200,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// attach to running NPL runtime
-		this._runtime.attach(args.port);
+		this._runtime.attach(args.port, 0);
 
 		this.sendResponse(response);
 	}

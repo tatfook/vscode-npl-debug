@@ -137,6 +137,11 @@
 								"description": "the main NPL script file",
 								"default": null
 							},
+							"cmdlineParams": {
+								"type": ["string"],
+								"description": "additional command line parameters to pass to the NPL runtime",
+								"default": ""
+							},
 							"searchpath": {
 								"type": "array",
 								"description": "array of search paths",
@@ -175,6 +180,7 @@
 						"name": "Launch NPL",
 						"runtimeExecutable": "npl",
 						"bootstrapper": "main.lua",
+						"cmdlineParams": "",
 						"port": 8099,
 						"searchpath": [],
 						"trace": false
@@ -202,6 +208,7 @@
 							"name": "Launch NPL",
 							"runtimeExecutable": "npl",
 							"bootstrapper": "main.lua",
+							"cmdlineParams": "",
 							"port": 8099,
 							"searchpath": [],
 							"trace": false
