@@ -3,7 +3,6 @@
  * email: lixizhi@yeah.net
  * date: 2018/2.19
  */
-import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -18,7 +17,7 @@ import { basename } from 'path';
 import { NPLDebugRuntime, NPLBreakpoint, NPLScriptBreakpoint } from './NPLDebugRuntime';
 const { Subject } = require('await-notify');
 import { LaunchRequestArguments, AttachRequestArguments } from './NPLDebugRequest';
-import {spawn, ChildProcess, execSync} from 'child_process';
+import {spawn } from 'child_process';
 
 export class NPLDebugSession extends LoggingDebugSession {
 	// we don't support multiple threads, so we can use a hardcoded ID for the default thread
@@ -41,7 +40,7 @@ export class NPLDebugSession extends LoggingDebugSession {
 	private _bootstrapper:string = "";
 
 	/** exit the application when the user stopped debugging */
-	private _exitAppOnStop: boolean = true;
+	private _exitAppOnStop: boolean | undefined = true;
 
 	/**
 	 * Creates a new debug adapter that is used for one debug session.

@@ -98,3 +98,12 @@ Or in `launch.json`
 It is very important to enable `debugServer` on port 4711, otherwise you can not debug the NPL adapter.
 If you are not debugging the server, you should remove `debugServer` line.
 For more information, please read carefully [this doc](https://code.visualstudio.com/docs/extensions/example-debuggers)
+
+### Publish the extension
+Refer to [this](https://code.visualstudio.com/docs/extensions/publish-extension)
+We need to register a token and create a publisher called `tatfook`.
+```
+npm install -g vsce
+vsce package
+vsce publish minor
+```
