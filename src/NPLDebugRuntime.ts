@@ -251,7 +251,10 @@ export class NPLDebugRuntime extends EventEmitter {
 			this.startTimer();
 			this.status = "running";
 			this.uploadAllBreakpoints();
-			this.sendEvent('NPLRuntimeAttached');
+			// wait for breakpoints to fully set before we do the actual attach.
+			setTimeout(()=>{
+				this.sendEvent('NPLRuntimeAttached');
+			}, 1000);
 		});
 	}
 

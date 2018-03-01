@@ -143,7 +143,7 @@
                                     "string",
                                     "null"
                                 ],
-                                "description": "the main NPL script file",
+                                "description": "the main NPL script file relative to working directory, such as main_loop.lua. if this is current_open_file, it will use the file that is currently open in the editor",
                                 "default": null
                             },
                             "cmdlineParams": {
@@ -198,7 +198,7 @@
                         "request": "launch",
                         "name": "Launch NPL",
                         "runtimeExecutable": "npl",
-                        "bootstrapper": "main.lua",
+                        "bootstrapper": "current_open_file",
                         "cmdlineParams": "",
                         "port": 8099,
                         "searchpath": [],
@@ -227,7 +227,7 @@
                             "request": "launch",
                             "name": "Launch NPL",
                             "runtimeExecutable": "npl",
-                            "bootstrapper": "main.lua",
+                            "bootstrapper": "current_open_file",
                             "cmdlineParams": "",
                             "port": 8099,
                             "searchpath": [],

@@ -64,10 +64,20 @@ class NPLConfigurationProvider implements vscode.DebugConfigurationProvider {
 			config.searchpath.push(config.cwd);
 		}
 
-		if (!config.program && config.type == "launch") {
-			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {
-				return undefined;	// abort launch
-			});
+		if ((config.bootstrapper === "current_open_file")  && config.request === "launch") {
+			// use the current file.
+			const editor = vscode.window.activeTextEditor;
+			if (editor && (editor.document.languageId === 'lua' || editor.document.languageId === 'npl')) {
+				let fullpath:string = editor.document.uri.fsPath;
+				if(fullpath && folder && folder.uri.fsPath){
+					fullpath = fullpath.replace(folder.uri.fsPath, "");
+					fullpath = fullpath.replace(/\\/g, "/");
+					if(fullpath && fullpath[0] == '/'){
+						fullpath = fullpath.substr(1, fullpath.length-1);
+					}
+					config.bootstrapper = fullpath;
+				}
+			}
 		}
 
 		if (config.debugServer && EMBED_DEBUG_ADAPTER) {

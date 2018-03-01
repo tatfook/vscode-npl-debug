@@ -49,7 +49,7 @@ For users who want to debug the first script loaded, we also provide the launch 
     "request": "launch",
     "name": "Launch NPL",
     "runtimeExecutable": "D:\\lxzsrc\\ParaCraftSDK\\redist\\paraengineclient.exe",
-    "bootstrapper": "script/apps/Aries/main_loop.lua",
+    "bootstrapper": "script/apps/Aries/main_loop.lua", // or use "current_open_file"
     "cmdlineParams": "mc=true noupdate=true",
     "port": 8099,
     "searchpath": [
@@ -63,7 +63,7 @@ For users who want to debug the first script loaded, we also provide the launch 
 
 parameters:
 - runtimeExecutable: if not specified or "npl", we will search in environment path variable for a installed NPL runtime executable. Under linux or mac, this is usually `/usr/local/bin/npl`
-- bootstrapper: this is the main entry point of the application.
+- bootstrapper: the main NPL script file relative to working directory, such as main_loop.lua. if this is `current_open_file`, it will use the file that is currently open in the editor.
 - cmdlineParams: additional command line parameters without bootstrapper and port.
 - exitAppOnStop: whether to exit the application when the user stopped debugging
 
