@@ -1,7 +1,7 @@
 {
     "name": "npl-debug",
     "displayName": "NPL Debug",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "publisher": "tatfook",
     "description": "NPL(Neural Parallel Language) Debugger for VS Code.",
     "author": {
